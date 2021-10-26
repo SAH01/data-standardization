@@ -351,7 +351,6 @@ if __name__ == '__main__':
 
     filepwd16 = "2016_year_data.xlsx"  # 需要处理的文件路径16年
     newfilepwd16 = "2016_res_data.xls"  # 处理完毕转存的文件路径16年
-
     do_clean(filepwd16, newfilepwd16, stdfilepwd)
 
     """
