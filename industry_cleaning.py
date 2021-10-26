@@ -1,5 +1,6 @@
 import pandas as pd
 import xlwt
+
 """
 rank的一系列变量是生成json字符串需要的标志
 由于json结构是循环遍历生成的，所以在每一层都要留下标记，以便于下一层的构建
@@ -13,16 +14,14 @@ rank30=""    #012 中类编号
 rank31=""    #    中类名字
 rank40=""    #0121小类编号
 rank41=""    #    小类名字
-#finalstr
-finalstr=""
 
 """
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-def get_json(filepwd):
+def get_json(stdfilepwd):
     """
-    :param filepwd:
+    :param stdfilepwd:标准国标文件
     :return: 标准行业维度json
     """
     """
@@ -50,7 +49,7 @@ def get_json(filepwd):
     # layer3 = dict['A']['01']["011"]
     # print("第三层 ：\n", layer3)
     #读取标准文件 df默认不读取第一行数据
-    df = pd.read_excel(filepwd)
+    df = pd.read_excel(stdfilepwd)
     #首先寻找第一层大写字母层的数据 定位行loc[] 定位
     # print(df.columns.values[0]) #A
 
@@ -170,17 +169,18 @@ def get_json(filepwd):
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-def ger_stdstr(qb03):
+def ger_stdstr(qb03,stdfilepwd):
     """
-    :param qb03:
+    :param qb03,stdfilepwd:
     :return: str 标准行业维度字符串 行业代码·门类名称·大类名称·中类名称·小类名称
+    qb03,待查编码
+    stdfilepwd,标准国标文件
     """
-    global finalstr
     #设置个标记，初始值False 说明默认找不到这个编码 如果找到了则设为True 如果最终是False则重新分割字符串，回调函数
     flag = False
     #获取字典
     my_dict={}
-    my_dict.update(get_json())
+    my_dict.update(get_json(stdfilepwd))
     # print(my_dict)
 
     category=""     #门类 名字
@@ -193,6 +193,7 @@ def ger_stdstr(qb03):
     # for 遍历第一层 门类
     for items in my_dict.items():
         res = ""                       #    定义该方法最终要返回的标准化行业维度字符串
+        # print(items[0])                 #ABCD
         for layer_0 in items[1].items():                #这个for循环已经进入了 第一层 {} 里面格式是 （门类名称：{ }）
             # print("门类：\n",layer_0)
             # print("门类名称:\n",layer_0[0])
@@ -216,16 +217,6 @@ def ger_stdstr(qb03):
                     """
                     ---------------------------------------
                     """
-                    # 递归调用补全缺失值
-                    if(len(qb03)==2 and qb03==layer_10[0]):
-                        print("缺失值补全：\n", finalstr)
-                        flag=True
-                        res = finalstr + "·" + category + "·" + big_class + "·" + big_class + "·" + big_class
-                        # print(res)
-                        return res
-                    """
-                    ---------------------------------------
-                    """
                     #进入大类（01，{ }）
                     for layer_20 in layer_11[1].items():#这个for循环已经进入了 第三层 {} 里面格式是 （中类名称：{ }）或者不正常的跨过中类的四位编码
                         # 这个分支的意思是有的类别只到了大类，没有经过中类直接分到了四位数的小类，所以必须分开遍历
@@ -237,7 +228,7 @@ def ger_stdstr(qb03):
                             if(qb03==layer_20[0]):
                                 print("跨过中类的小类，判断成功！",qb03)
                                 flag=True
-                                res = qb03+ "·"+ category + "·" + big_class + "·"+small_class+ "·"+small_class
+                                res = items[0]+ qb03+ "·"+ category + "·" + big_class + "·"+small_class
                                 return res
                         else:
                             for layer_21 in layer_20[1].items():    #这个for循环已经进入了 第三层正常的中类 {} 里面格式是 （中类名称：{ }）
@@ -245,11 +236,11 @@ def ger_stdstr(qb03):
                                 medium_class = layer_21[0]
                                 # print("中类名称:\n",medium_class)
                                 # 这里是个大坑，我的遍历是进入值的那一层，编码在上一级的遍历 layer_20[0]
-                                if (qb03 == layer_20[0]):
-                                    print("三位中类判断成功！", qb03)
-                                    flag=True
-                                    res = qb03 + "·" + category + "·" + big_class + "·" + medium_class+ "·" + medium_class
-                                    return res
+                                # if (qb03 == layer_20[0]):
+                                #     print("三位中类判断成功！", qb03)
+                                #     flag=True
+                                #     res = qb03 + "·" + category + "·" + big_class + "·" + medium_class
+                                #     return res
                                 #继续划分到小类
                                 for layer_30 in layer_21[1].items():    #这个for循环已经进入了 第四层 {} 里面格式是 （小类名称：{ }）
                                     #这个layer_30就是最后一层的四位数数据了 格式： ('0111', '稻谷种植') 是一个tuple 索引0是编码1是名称
@@ -260,26 +251,27 @@ def ger_stdstr(qb03):
                                     if (qb03 == layer_30[0]):
                                         print("正常四位小类判断成功！", qb03)
                                         flag=True
-                                        res=qb03+"·"+category+"·"+big_class+"·"+medium_class+"·"+small_class
+                                        res=items[0]+qb03+"·"+category+"·"+big_class+"·"+medium_class+"·"+small_class
                                         return res
-    #这里是对没有找到的编码进行二次寻找，主要是通过对传入的参数编码进行字符串切分，只保留前两位字符。
+    #这里是对没有找到的编码进行二次寻找，字符串拼接，最前面加个0
     if(flag==False):
-        finalstr = qb03
-        new_qb03=qb03[:2]
-        return ger_stdstr(new_qb03)               #递归调用自身
+        new_qb03="0"+qb03
+        return ger_stdstr(new_qb03,stdfilepwd)               #递归调用自身
 
 """
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-def do_clean(filepwd,newfilepwd):
+def do_clean(filepwd,newfilepwd,stdfilepwd):
     """
     1、读取源数据表格
-    2、逐个把数据传入get_stdstr(qb03)方法获得返回值存回excel表格
+    2、逐个把数据传入get_stdstr(qb03,stdfilepwd)方法获得返回值存回excel表格
     参数：需要清洗的行业编码，单列数据
+    filepwd,需要清洗的文件
+    newfilepwd,新生成的文件存储路径
+    stdfilepwd,标准的国标文件
     :return:None
     """
-
     """
     待清洗的文件格式：filepwd
     QB03
@@ -318,7 +310,11 @@ def do_clean(filepwd,newfilepwd):
     #range(len(df.index.values))
     for i in range(len(df.index.values)):
         # print(df.loc[i].values[0])
-        temp_res=ger_stdstr(str(df.loc[i].values[0]))
+        """
+        ger_stdstr()
+        两个参数 一个是待查编码   一个是标准json文件路径
+        """
+        temp_res=ger_stdstr(str(df.loc[i].values[0]),stdfilepwd)
         print(temp_res)
         if(temp_res!=None):
             res.append(temp_res)
@@ -329,19 +325,12 @@ def do_clean(filepwd,newfilepwd):
     workbook = xlwt.Workbook(encoding='utf-8')
     sheet = workbook.add_sheet('sheet1', cell_overwrite_ok=True)
     sheet.col(0).width=256*100
-    sheet.write(0, 0, "data")
+    sheet.write(0, 0, "DATA")
     for i in range(len(res)):
         sheet.write(i+1, 0, res[i])
     workbook.save(newfilepwd)
     return None
 if __name__ == '__main__':
-    # print()
-    #311 2662 610
-    # res=ger_stdstr("610")
-    # print("----------------------")
-    # print(res)
-    # print("----------------------")
-    # do_clean()
     #封装方法getjson()
     """
     1、封装构建json的方法 getjson() , 方法有一个参数 参数是文件路径
@@ -349,13 +338,25 @@ if __name__ == '__main__':
     第一列是行业编码 第二列是行业名称
     """
     #测试调用
-    filename="GBT4754-2011.xlsx"
-    get_json(filename)
+    stdfilepwd="GBT4754-2011.xlsx"
+    # get_json(stdfilepwd)
     """
     --------------------------------------------------------------
     """
-    #封装方法do_clean(filepwd,newfilepwd)
+
+    #封装方法do_clean(filepwd,newfilepwd,stdfilepwd)
     # 测试调用
-    filepwd="2013_year_data.xlsx" #需要处理的文件路径
-    newfilepwd="2013_res_data.xls"  #处理完毕转存的文件路径
-    do_clean(filepwd,newfilepwd)
+    filepwd="2013_year_data.xlsx" #需要处理的文件路径13年
+    newfilepwd="2013_res_data.xls"  #处理完毕转存的文件路径13年
+
+    filepwd16 = "2016_year_data.xlsx"  # 需要处理的文件路径16年
+    newfilepwd16 = "2016_res_data.xls"  # 处理完毕转存的文件路径16年
+
+    do_clean(filepwd16, newfilepwd16, stdfilepwd)
+
+    """
+    --------------------------------------------------------------
+    """
+    #封装ger_stdstr(qb03,jsonfilepwd) 方法   参数1是四位待查编码  参数2是json文件的路径
+    # res=ger_stdstr("321",stdfilepwd)
+    # print(res)
