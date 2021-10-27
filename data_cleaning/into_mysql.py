@@ -3,11 +3,6 @@ import pymysql
 """
 ------------------------------------------------------------------------------------
 """
-
-"""
--------------------------------------------------------------------------------------
-"""
-
 def get_conn():
     """
     :return: 连接，游标
@@ -83,7 +78,7 @@ def into_mysql(filename):
             tempres.append(category_code+code)              #列表暂存A0511 编码
             tempres.append(category_name+"·"+big_class+"·"+mid_class+"·"+small_class)   #列表暂存完整的名称
             print(tempres)
-            SQL = "insert into std_code (code,name) values('"+tempres[0]+"','"+tempres[1]+"');"     #sql插入语句
+            SQL = "insert into std_code_2017 (code,name) values('"+tempres[0]+"','"+tempres[1]+"');"     #sql插入语句
             try:
                 cursor.execute(SQL)             #执行sql语句
                 conn.commit()                   #提交事务
@@ -95,5 +90,5 @@ def into_mysql(filename):
     close_conn(conn,cursor)     #关闭数据库连接
     return None
 if __name__ == '__main__':
-    filename="GBT4754-2011.xlsx"
+    filename="GBT4754-2017.xlsx"
     into_mysql(filename)
