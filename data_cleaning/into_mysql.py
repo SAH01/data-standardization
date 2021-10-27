@@ -44,11 +44,11 @@ def query(sql,*args):
 """
 ------------------------------------------------------------------------------------
 """
-
+count=0     #计算四位编码个数
 def into_mysql(filename):
     category_code = ""      #门类编码
     category_name = ""      #门类名称
-
+    global count
     conn,cursor=get_conn()  #连接mysql
     if(conn!=None):
         print("数据库连接成功！")
@@ -64,6 +64,7 @@ def into_mysql(filename):
             category_name=name     #门类名称
         #分割编码
         if len(code)==4:
+            count=count+1
             small_class=name        #小类名称
             new_code_2=code[:2]     #分割出两位编码    之后确定大类名称
             new_code_3=code[:3]     #分割出三位编码    之后确定中类名称
@@ -78,16 +79,15 @@ def into_mysql(filename):
             tempres.append(category_code+code)              #列表暂存A0511 编码
             tempres.append(category_name+"·"+big_class+"·"+mid_class+"·"+small_class)   #列表暂存完整的名称
             print(tempres)
+            #====================================================================================
             SQL = "insert into std_code_2017 (code,name) values('"+tempres[0]+"','"+tempres[1]+"');"     #sql插入语句
-            try:
-                cursor.execute(SQL)             #执行sql语句
-                conn.commit()                   #提交事务
-                print("第"+str(i+1)+"条数据插入成功:\n",category_code+code,name)        #插入成功输出
-                print("--------------------------------------------------")
-            except:
-                print("插入失败:\n",category_code+code,name)
+            cursor.execute(SQL)             #执行sql语句
+            conn.commit()                   #提交事务
+            print("--------------------------------------------------")
+            # ====================================================================================
             tempres=[]          #清空列表
     close_conn(conn,cursor)     #关闭数据库连接
+    print("所有的四位编码数：\n",count)
     return None
 if __name__ == '__main__':
     filename="GBT4754-2017.xlsx"
