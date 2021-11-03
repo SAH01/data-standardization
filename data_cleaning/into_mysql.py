@@ -80,11 +80,12 @@ def into_mysql(*filename):
                         big_class=df.loc[j][1]    #大类名称
                     if new_code_3==df.loc[j][0]:
                         mid_class=df.loc[j][1]    #中类名称
+                tempres.append(code)                            #列表暂存0511 编码
                 tempres.append(category_code+code)              #列表暂存A0511 编码
                 tempres.append(category_name+"·"+big_class+"·"+mid_class+"·"+small_class)   #列表暂存完整的名称
                 print(tempres)
                 #====================================================================================
-                SQL = "insert into std_code (year,code,name) values('"+file[8:12]+"','"+tempres[0]+"','"+tempres[1]+"');"     #sql插入语句
+                SQL = "insert into std_code (year,code_0,code,name) values('"+file[8:12]+"','"+tempres[0]+"','"+tempres[1]+"','"+tempres[2]+"');"     #sql插入语句
                 cursor.execute(SQL)             #执行sql语句
                 conn.commit()                   #提交事务
                 print("--------------------------------------------------")
