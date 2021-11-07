@@ -2,7 +2,7 @@ import pandas as pd
 import pymysql
 
 
-def get_subject():
+def get_subject_1992():
     res={}
     the_former_code = ""
     layer1_code = ""  # 一位
@@ -73,7 +73,7 @@ def close_conn(conn, cursor):
 
 def into_mysql():
     global conn, cursor
-    res=get_subject()
+    res=get_subject_1992()
     for k,v in res.items():
         print(k,v)
         try:
