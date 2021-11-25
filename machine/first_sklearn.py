@@ -218,8 +218,8 @@ if __name__ == '__main__':
     #5 测试结巴分词函数
     # cut_word("我爱北京天安门")
     #6 TF-IDF
-    #7 tfidf_demo()
+    tfidf_demo()
     #8 归一化
     #minmax()
     #9 标准化
-    stand_demo()
+    # stand_demo()
